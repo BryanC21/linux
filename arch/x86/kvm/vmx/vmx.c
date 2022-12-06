@@ -6465,22 +6465,22 @@ Leaf node 0x4FFFFFFC total exits count
 Leaf node 0x4FFFFFFD processor cycles spent processing exits
 */
 
-extern atomic_t total_exits_counter;
-extern atomic64_t total_cup_cycles_counter;
+extern atomic_t exits_counter;
+extern atomic64_t cpu_counter;
 
 static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 {
-        uint64_t begin_time_stamp_counter;
-        uint64_t end_time_stamp_counter;
+        uint64_t begin_counter;
+        uint64_t end_counter;
         int ret;
 
-        arch_atomic_inc(&total_exits_counter);
-        begin_time_stamp_counter = rdtsc();
+        arch_atomic_inc(&exits_counter);
+        begin_counter = rdtsc();
 
         ret = __vmx_handle_exit(vcpu, exit_fastpath);
 
-        end_time_stamp_counter = rdtsc();
-        arch_atomic64_add((end_time_stamp_counter - begin_time_stamp_counter), &total_cup_cycles_counter);
+        end_counter = rdtsc();
+        arch_atomic64_add((end_counter - begin_counter), &cpu_counter);
 
 	/*
 	 * Exit to user space when bus lock detected to inform that there is

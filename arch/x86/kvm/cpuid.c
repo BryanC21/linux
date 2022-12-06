@@ -1500,11 +1500,11 @@ Leaf nodes:
 0x4FFFFFFD - cpu cycles spent
 */
 
-atomic_t total_exits_counter = ATOMIC_INIT(0);
-EXPORT_SYMBOL(total_exits_counter);
+atomic_t exits_counter = ATOMIC_INIT(0);
+EXPORT_SYMBOL(exits_counter);
 
-atomic64_t total_cup_cycles_counter = ATOMIC64_INIT(0);
-EXPORT_SYMBOL(total_cup_cycles_counter);
+atomic64_t cpu_counter = ATOMIC64_INIT(0);
+EXPORT_SYMBOL(cpu_counter);
 
 int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 {
@@ -1516,11 +1516,11 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
 
-        if(eax == 0x4FFFFFFC) {
-            eax = arch_atomic_read(&total_exits_counter);
+        if (eax == 0x4FFFFFFC) {
+            eax = arch_atomic_read(&exits_counter);
         } else if (eax == 0x4FFFFFFD) {
-            ebx = (atomic64_read(&total_cup_cycles_counter) >> 32);
-            ecx = (atomic64_read(&total_cup_cycles_counter) & 0xFFFFFFFF);
+            ebx = (atomic64_read(&cpu_counter) >> 32);
+            ecx = (atomic64_read(&cpu_counter) & 0xFFFFFFFF);
         } else {
 	    kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
         }
