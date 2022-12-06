@@ -47,4 +47,21 @@ Steps:
 * sudo rmmod kvm
 * sudo modprobe kvm_intel
 * sudo modprobe kvm
-* 
+* Install packages for kvm: sudo apt-get install qemu-kvm libvirt-daemon-system libvirt-clients bridge-utils
+* sudo kvm-ok
+* sudo reboot
+* Here I used Google's https://remotedesktop.google.com/ to set up a UI connection to my virtual machine through Chrome broowser. This allowed for easier creation of the inner virtual machines. Instructions are complex so I won't explain them myself.
+* Create inner VM inside my Ubuntu VM
+* sudo apt install virt-manager
+* Get the ubuntu 64 bit iso: wget https://releases.ubuntu.com/jammy/ubuntu-22.04.1-desktop-amd64.iso
+* sudo mv ~/ubuntu-22.04.1-desktop-amd64.iso /var/lib/libvirt/images/
+* Launch virtual manager: sudo virt-manager
+* Create a virtual machine running the Ubuntu iso
+* Login to inner VM
+* Install necessary packages in inner VM
+*   sudo apt-get update
+    sudo apt-get install build-essential
+    sudo apt-get install cpuid
+* Run test code that uses cpuid
+* After running my test script I get:  
+![alt text](https://i.imgur.com/a36iYZ4.png)
