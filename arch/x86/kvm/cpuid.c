@@ -1493,6 +1493,19 @@ bool kvm_cpuid(struct kvm_vcpu *vcpu, u32 *eax, u32 *ebx,
 }
 EXPORT_SYMBOL_GPL(kvm_cpuid);
 
+/*
+Assignment 2 implementation
+Leaf nodes: 
+0x4FFFFFFC - count of exits
+0x4FFFFFFD - cpu cycles spent
+*/
+
+atomic_t total_exits_counter = ATOMIC_INIT(0);
+EXPORT_SYMBOL(total_exits_counter);
+
+atomic64_t total_cup_cycles_counter = ATOMIC64_INIT(0);
+EXPORT_SYMBOL(total_cup_cycles_counter);
+
 int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 {
 	u32 eax, ebx, ecx, edx;
@@ -1502,7 +1515,16 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 
 	eax = kvm_rax_read(vcpu);
 	ecx = kvm_rcx_read(vcpu);
-	kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
+
+        if(eax == 0x4FFFFFFC) {
+            eax = arch_atomic_read(&total_exits_counter);
+        } else if (eax == 0x4FFFFFFD) {
+            ebx = (atomic64_read(&total_cup_cycles_counter) >> 32);
+            ecx = (atomic64_read(&total_cup_cycles_counter) & 0xFFFFFFFF);
+        } else {
+	    kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
+        }
+
 	kvm_rax_write(vcpu, eax);
 	kvm_rbx_write(vcpu, ebx);
 	kvm_rcx_write(vcpu, ecx);

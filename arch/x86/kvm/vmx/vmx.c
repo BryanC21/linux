@@ -6459,9 +6459,28 @@ unexpected_vmexit:
 	return 0;
 }
 
+/*
+Implementation of assignment 2
+Leaf node 0x4FFFFFFC total exits count
+Leaf node 0x4FFFFFFD processor cycles spent processing exits
+*/
+
+extern atomic_t total_exits_counter;
+extern atomic64_t total_cup_cycles_counter;
+
 static int vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 {
-	int ret = __vmx_handle_exit(vcpu, exit_fastpath);
+        uint64_t begin_time_stamp_counter;
+        uint64_t end_time_stamp_counter;
+        int ret;
+
+        arch_atomic_inc(&total_exits_counter);
+        begin_time_stamp_counter = rdtsc();
+
+        ret = __vmx_handle_exit(vcpu, exit_fastpath);
+
+        end_time_stamp_counter = rdtsc();
+        arch_atomic64_add((end_time_stamp_counter - begin_time_stamp_counter), &total_cup_cycles_counter);
 
 	/*
 	 * Exit to user space when bus lock detected to inform that there is
