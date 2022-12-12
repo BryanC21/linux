@@ -1495,7 +1495,7 @@ EXPORT_SYMBOL_GPL(kvm_cpuid);
 
 /*
 Assignment 2 implementation
-Leaf nodes: 
+Leaf nodes:
 0x4FFFFFFC - count of exits
 0x4FFFFFFD - cpu cycles spent
 */
@@ -1506,9 +1506,19 @@ EXPORT_SYMBOL(exits_counter);
 atomic64_t cpu_counter = ATOMIC64_INIT(0);
 EXPORT_SYMBOL(cpu_counter);
 
+//assignment 3
+atomic_t exit_number_count[76];
+EXPORT_SYMBOL(exit_number_count);
+
+atomic64_t cpu_exit_number_count[76];
+EXPORT_SYMBOL(cpu_exit_number_count);
+
 int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
 {
 	u32 eax, ebx, ecx, edx;
+
+        //assignment 3
+        u64 cycle_counter;
 
 	if (cpuid_fault_enabled(vcpu) && !kvm_require_cpl(vcpu, 0))
 		return 1;
@@ -1521,6 +1531,28 @@ int kvm_emulate_cpuid(struct kvm_vcpu *vcpu)
         } else if (eax == 0x4FFFFFFD) {
             ebx = (atomic64_read(&cpu_counter) >> 32);
             ecx = (atomic64_read(&cpu_counter) & 0xFFFFFFFF);
+        } else if (eax == 0x4FFFFFFE) {
+            if (ecx >= 0 && ecx <= 69 && ecx != 35 && ecx != 38 && ecx != 42) {
+                if (ecx != 5 && ecx != 6 && ecx != 11 && ecx != 17 && ecx != 65 && ecx != 66 && ecx != 69) {
+                    eax = arch_atomic_read(&exit_number_count[(int)ecx]);
+                } else {
+                    eax = 0; ebx = 0; ecx = 0; edx = 0;
+                }
+            } else {
+                eax = 0; ebx = 0; ecx = 0; edx = 0xFFFFFFFF;
+            }
+        } else if (eax == 0x4FFFFFFF) {
+            if (ecx >= 0 && ecx <= 69 && ecx != 35 && ecx != 38 && ecx != 42) {
+                if (ecx != 5 && ecx != 6 && ecx != 11 && ecx != 17 && ecx != 65 && ecx != 66 && ecx != 69) {
+                    cycle_counter = atomic64_read(&cpu_exit_number_count[(int)ecx]);
+                    ebx = (cycle_counter >> 32);
+                    ecx = (cycle_counter & 0xFFFFFFFF);
+                } else {
+                    eax = 0; ebx = 0; ecx = 0; edx = 0;
+                }
+            } else {
+                eax = 0; ebx = 0; ecx = 0; edx = 0xFFFFFFFF;
+            }
         } else {
 	    kvm_cpuid(vcpu, &eax, &ebx, &ecx, &edx, false);
         }

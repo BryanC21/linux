@@ -6280,8 +6280,21 @@ void dump_vmcs(struct kvm_vcpu *vcpu)
  * The guest has exited.  See if we can fix it or if we need userspace
  * assistance.
  */
+/*
+Assignment 3 implementation
+0x4FFFFFFE - returns number of exits provided for exit number
+0x4FFFFFFF - return cpu time spent for exit number
+*/
+extern atomic_t exit_number_count[76];
+extern atomic64_t cpu_exit_number_count[76];
+
 static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 {
+        //assignment 3
+        uint64_t begin_time_stamp_counter;
+        uint64_t end_time_stamp_counter;
+        int exit_handler_status;
+
 	struct vcpu_vmx *vmx = to_vmx(vcpu);
 	union vmx_exit_reason exit_reason = vmx->exit_reason;
 	u32 vectoring_info = vmx->idt_vectoring_info;
@@ -6444,7 +6457,23 @@ static int __vmx_handle_exit(struct kvm_vcpu *vcpu, fastpath_t exit_fastpath)
 	if (!kvm_vmx_exit_handlers[exit_handler_index])
 		goto unexpected_vmexit;
 
-	return kvm_vmx_exit_handlers[exit_handler_index](vcpu);
+        //assignment 3
+	//exit number count
+	if (exit_reason.basic < 76) {
+		arch_atomic_inc(&exit_number_count[(int)exit_reason.basic]);
+	}
+
+	begin_time_stamp_counter = rdtsc();
+	exit_handler_status = kvm_vmx_exit_handlers[exit_handler_index](vcpu);
+	end_time_stamp_counter = rdtsc();
+
+	//cpu time
+	if (exit_reason.basic < 76) {
+		arch_atomic64_add((end_time_stamp_counter - begin_time_stamp_counter), &cpu_exit_number_count[(int)exit_reason.basic]);
+	}
+
+	return exit_handler_status;
+	//return kvm_vmx_exit_handlers[exit_handler_index](vcpu);
 
 unexpected_vmexit:
 	vcpu_unimpl(vcpu, "vmx: unexpected exit reason 0x%x\n",
